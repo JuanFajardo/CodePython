@@ -1,2 +1,2 @@
 # CodePython
-Pequeños trozos de codigo para Pruebas de penetracion e Informatica forence.
+Pequeños trozos de codigo para pruebas de penetracion e informatica forence.
