@@ -16,7 +16,6 @@ def ftpBrute(user, clave, ip):
         print('[-] Intentando con {0}'.format(clave))
         return 0
 
-
 def main():
     try:
         parse = OptionParser(' -i [IP/192.168.1.1] -u [USUARIO] -l [Diccionario] ')
