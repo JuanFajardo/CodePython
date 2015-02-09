@@ -1,5 +1,10 @@
 #!/usr/bin/python
 __author__ = 'bett0'
+#
+#   Escrito para http://www.CommunitySec.com/
+#   Prueba en Debian Wheezy
+#   python ftpBrute.py -i 192.168.1.1 -u admin -l lista.txt
+#
 
 import ftplib
 from optparse import OptionParser
