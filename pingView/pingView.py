@@ -8,9 +8,7 @@ from subprocess import Popen, PIPE
 from optparse import OptionParser
 import sys
 
-
 ip = str(sys.argv[1])
-
 
 def ping(ip):
     try:
@@ -27,7 +25,6 @@ def ping(ip):
     except Exception, err:
         print('Error {0}'.format(err))
 
-
 def main():
     pr = OptionParser(" python pingView.py -r [IP / 192.168.1]")
     pr.add_option("-r", "--rango" ,dest='ip', type='string', help='El rango de escaneo es de /24')
@@ -37,7 +34,6 @@ def main():
         exit(0)
     else:
         ping(opts.ip)
-
 
 if __name__ == '__main__':
     main()
