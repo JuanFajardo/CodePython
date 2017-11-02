@@ -4,7 +4,7 @@ import sys
 import time
 
 cont = 0
-for i in range (3654, 3994):
+for i in range (306, 3994):
     cont = cont + 1 
     link = "http://www.milanuncios.bo/usuarios/perfil.php/?id="+str(i)
     html = urllib.urlopen(link).read()
