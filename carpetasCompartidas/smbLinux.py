@@ -1,65 +1,91 @@
+
+
+#!/bin/python3
+
+# Para escanear y recolectar la informacion de las carpetas compartidas en una red local
+# Por cuestion de manipulacion se esta guardando todos los datos en un sql
+# Se registra la ruta completa las carpetas de esa ruta los archivos y si tiene permiso o no de escritura. 
+# Creacion de los datos de la tabla
+#create database red;
+#create table compartidos( id serial, ip varchar(15), link text, carpetas text, archivos text, fecha date, escritura varchar(5));
+#Ejecucion
+#python3 smbWin.py 192.168.1.0/24
+
+#!/bin/python3
+
 import nmap
+import win32net
 import os
+import sys
 import datetime
-import mysql.connector
-from smbprotocol.connection import Connection
-from smbprotocol.exceptions import SMBException
+import sqlite3
 
-def is_writable(path):
-    try:
-        file = "\\bett0.txt"
-        path_full = path + file
-        with open(path_full, "w") as f:
-            pass
-        os.remove(path_full)
-        return "SI"
-    except:
-        return "NO"
+conn = sqlite3.connect('soyBett0.db')
+cursor = conn.cursor()
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS compartidos (
+        id INTEGER PRIMARY KEY,
+        ip TEXT, link TEXT, carpetas TEXT, archivos TEXT, fecha DATE, escritura TEXT
+    )
+''')
+conn.commit()
 
-def file_sharing(ip):
-    try:
-	    connection = mysql.connector.connect( host="192.168.1.69", database="carpetas", user="bett0", password="bett0")
-	    
-        conn = Connection(ip, username="bett0", password="bett0")
-        conn.connect()
+    
+def isWritable(path):
+  try:
+    file = "\\bett0.txt"
+    pathFull = path + file
+    fileInShared = os.open( pathFull, os.O_RDWR|os.O_CREAT )
+    os.close( fileInShared )
+    os.remove( pathFull )
+    return "SI"
+  except:
+    return "NO"
+  
+def fileSharing(ip):
+  #cursor = conn.cursor()
+  try:
+    folders, _, _ = win32net.NetShareEnum(ip, 0)
+    for folder  in folders:
+      route = folder['netname']
+      print("\t\t\t "+route)
+      for paths, binders, files in os.walk(rf'\\{ip}\{route}'):
+        path    = paths
+        binder  = binders
+        file    = files 
+        timer   = str( datetime.datetime.now() )
+        write   = isWritable( path )
         
-		cursor = connection.cursor()
-        share = conn.tree_connect("/")
-        for entry in share.list_directory(''):
-            if entry.file_attributes.is_directory:
-                folder_name = entry.file_name.decode("utf-8")
-                path = rf'\\{ip}\{folder_name}'
-                binder = []  # No se manejan los binders con smbprotocol
-                files = []  # No se manejan los archivos con smbprotocol
-                timer = str(datetime.datetime.now())
-                write = is_writable(path)
-                sql = "INSERT INTO compartidos(ip, link, carpetas, archivos, fecha, escritura) VALUES(%s, %s, %s, %s, %s, %s)"
-		        cursor.execute(sql, (ip, str(path), str(binder), str(file), timer, write))
-        		connection.commit()
-        cursor.close()
+        cursor.execute("INSERT INTO compartidos(ip, link, carpetas, archivos, fecha, escritura) VALUES (?, ?, ?, ?, ?, ?)", (ip, str(path), str(binder), str(file), timer, write) )
+        
+        #sql = "INSERT INTO compartidos(ip, link, carpetas, archivos, fecha, escritura) VALUES("+ip+", "+str(path)+", "+str(binder)+", "+str(file)+", "+timer+", "+write+")"
+        #print(sql)
+        
+        conn.commit()
+  except sqlite3.Error as e:
+    print(f"[-] ERROR: --{ip}")
+    print(e)
+  conn.close()
+  
+print("By SoyBett0")
+print("===========") 
+                      
+#Tus direcciones IP que no quieres que escane
+lists = ['192.168.1.100']
 
-    except SMBException as e:
-    	print(f"\t\t \t -- {ip} {e}")
-    finally:
-        conn.disconnect()
-	connection.close()
-	
-lista = [
-    '192.168.1.0/24',
-    #'192.168.2.0/24'
-]
-
-miIps = ["192.168.1.8"]
 def main():
-    nm = nmap.PortScanner()
-    for lst in lista:
-        print("Escaneando VLAN: " + lst + " en: " + str(datetime.datetime.now()))
-        lan = nm.scan(hosts=str(lst), arguments='-p 445 --open')
-        ips = lan['scan']
-        for ip in ips:
-            print('\t [+] ... ' + ip)
-            if ip not in miIps:  # Tu IP para que no saque tu info XD
-                file_sharing(ip)
-
+  nm = nmap.PortScanner()
+  print(str(sys.argv[1]))
+  list = str(sys.argv[1])
+  print("Escaneando VLAN: "+ list + " en: " + str( datetime.datetime.now() ) )
+  lan = nm.scan(hosts=str(list), arguments='-p 445 --open')
+  ips = lan['scan']
+  for ip in ips:
+    print('\t [.]... ' + ip)
+    if ip not in lists:  #Tus Ip's
+      print('\t\t [+] -->>' + ip)
+      fileSharing( str(ip) )
+     
 if __name__ == "__main__":
-    main()
+  main()
+  
